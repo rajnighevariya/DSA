@@ -1,0 +1,106 @@
+// Open or create the IndexedDB database
+var request = indexedDB.open("myDatabase", 1);
+var db;
+
+request.onerror = function(event) {
+  console.log("Database error: " + event.target.errorCode);
+};
+
+request.onsuccess = function(event) {
+  db = event.target.result;
+  console.log("Database opened successfully");
+  
+  // Call functions to perform CRUD operations
+  // For example:
+  // readData();
+  // insertData();
+  // updateData();
+  // deleteData();
+};
+
+request.onupgradeneeded = function(event) {
+  db = event.target.result;
+  
+  // Create object store (similar to a table in SQL databases)
+  var objectStore = db.createObjectStore("myObjectStore", { keyPath: "id", autoIncrement:true });
+  
+  // Define object store's schema
+  objectStore.createIndex("name", "name", { unique: false });
+  objectStore.createIndex("email", "email", { unique: true });
+  
+  console.log("Object store created successfully");
+};
+
+// Function to insert data
+function insertData() {
+  var transaction = db.transaction(["myObjectStore"], "readwrite");
+  var objectStore = transaction.objectStore("myObjectStore");
+  
+  var newData = { name: "John", email: "john@example.com" };
+  var request = objectStore.add(newData);
+  
+  request.onsuccess = function(event) {
+    console.log("Data inserted successfully");
+  };
+  
+  request.onerror = function(event) {
+    console.log("Error inserting data: " + event.target.errorCode);
+  };
+}
+
+// Function to read data
+function readData() {
+  var transaction = db.transaction(["myObjectStore"], "readonly");
+  var objectStore = transaction.objectStore("myObjectStore");
+  var request = objectStore.getAll();
+  
+  request.onsuccess = function(event) {
+    console.log("Data read successfully:", event.target.result);
+  };
+  
+  request.onerror = function(event) {
+    console.log("Error reading data: " + event.target.errorCode);
+  };
+}
+
+// Function to update data
+function updateData() {
+  var transaction = db.transaction(["myObjectStore"], "readwrite");
+  var objectStore = transaction.objectStore("myObjectStore");
+  
+  var request = objectStore.get(/* specify the key of the data you want to update */);
+  
+  request.onsuccess = function(event) {
+    var data = event.target.result;
+    // Update data properties
+    data.name = "Updated Name";
+    data.email = "updated@example.com";
+    
+    // Put updated data back into the object store
+    var updateRequest = objectStore.put(data);
+    
+    updateRequest.onsuccess = function(event) {
+      console.log("Data updated successfully");
+    };
+    
+    updateRequest.onerror = function(event) {
+      console.log("Error updating data: " + event.target.errorCode);
+    };
+  };
+}
+
+// Function to delete data
+function deleteData() {
+  var transaction = db.transaction(["myObjectStore"], "readwrite");
+  var objectStore = transaction.objectStore("myObjectStore");
+  
+  var request = objectStore.delete(/* specify the key of the data you want to delete */);
+  
+  request.onsuccess = function(event) {
+    console.log("Data deleted successfully");
+  };
+  
+  request.onerror = function(event) {
+    console.log("Error deleting data: " + event.target.errorCode);
+  };
+}
