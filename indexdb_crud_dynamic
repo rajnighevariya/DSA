@@ -1,0 +1,164 @@
+// Open or create the IndexedDB database
+var request = indexedDB.open("myDatabase", 1);
+var mylcmIndexdb;
+let defaultDbname = 'lcmstorege';
+request.onerror = function (event) {
+    console.log("Database error: " + event.target.errorCode);
+};
+
+request.onsuccess = function (event) {
+    mylcmIndexdb = event.target.result;
+    console.log("Database opened successfully");
+
+    // readData();
+    // insertData();
+    // updateData();
+    // deleteData();
+};
+
+request.onupgradeneeded = function (event) {
+    mylcmIndexdb = event.target.result;
+
+    // Create object store (similar to a table in SQL databases)
+    var objectStore = mylcmIndexdb.createObjectStore("mylcmStore", { keyPath: "id", autoIncrement: true });
+
+    // Define object store's schema
+    objectStore.createIndex("name", "name", { unique: false });
+    objectStore.createIndex("email", "email", { unique: true });
+
+    console.log("Object store created successfully");
+};
+function indexOpration(data) {
+    let { dbname = 'mylcmStore', id = "", action = 'get', info = {} } = data;
+    var transaction = mylcmIndexdb.transaction([dbname], "readwrite");
+    var objectStore = transaction.objectStore(dbname);
+    var request;
+    switch (action) {
+        case 'get':
+            request = objectStore.get(id);
+            break;
+        case 'getall':
+            break;
+        case 'update':
+            request = objectStore.get(id);
+            break;
+        case 'add':
+            request = objectStore.add(info);
+            break;
+        case 'readall':
+            break;
+        default:
+            request = objectStore.getAll();
+
+    }
+
+    request.onsuccess = function (event) {
+        var resultData = event.target.result;
+        switch (action) {
+            case "update":
+                console.log(resultData);
+                // Update data properties
+
+                resultData = { ...resultData, ...info };
+                console.log(resultData);
+
+                // Put updated data back into the object store
+                objectStore.put(resultData);
+                break;
+        }
+
+        console.log(`Data ${action} successfully`, resultData);
+        return event.target.result;
+    };
+
+    request.onerror = function (event) {
+        console.log("Error inserting data: " + JSON.stringify(event));
+    };
+
+}
+
+// Function to insert data
+function insertData(newData) {
+    let { dbname = 'mylcmStore', data } = newData;
+    console.log("Insert", newData);
+    var transaction = mylcmIndexdb.transaction([dbname], "readwrite");
+    var objectStore = transaction.objectStore('mylcmStore');
+
+    // var newData = { id: 1, name: "John", email: "john@example.com" };
+
+    var request = objectStore.add(data);
+
+    request.onsuccess = function (event) {
+        console.log("Data inserted successfully");
+    };
+
+    request.onerror = function (event) {
+        console.log("Error inserting data: " + event);
+    };
+}
+
+// Function to read  data
+function readData(data) {
+    let { dbname = 'mylcmStore', id } = data;
+    var transaction = mylcmIndexdb.transaction(['mylcmStore'], "readonly");
+    var objectStore = transaction.objectStore('mylcmStore');
+    var request;
+    if (id !== undefined) {
+        request = objectStore.get(id);
+    } else {
+        request = objectStore.getAll();
+    }
+
+    request.onsuccess = function (event) {
+        console.log("Data read successfully:", event.target.result);
+    };
+
+    request.onerror = function (event) {
+        console.log("Error reading data: " + event);
+    };
+}
+
+// Function to update data
+function updateData(newData) {
+    let { dbname = 'mylcmStore', data } = newData;
+
+    var transaction = mylcmIndexdb.transaction(['mylcmStore'], "readwrite");
+    var objectStore = transaction.objectStore('mylcmStore');
+
+    var request = objectStore.get(id);
+
+    request.onsuccess = function (event) {
+        var data = event.target.result;
+        // Update data properties
+
+        data = { ...data };
+
+        // Put updated data back into the object store
+        var updateRequest = objectStore.put(data);
+
+        updateRequest.onsuccess = function (event) {
+            console.log("Data updated successfully");
+        };
+
+        updateRequest.onerror = function (event) {
+            console.log("Error updating data: " + event);
+        };
+    };
+}
+
+// Function to delete data
+function deleteData(data) {
+    let { dbname = 'mylcmStore', id } = data;
+    var transaction = mylcmIndexdb.transaction(['mylcmStore'], "readwrite");
+    var objectStore = transaction.objectStore('mylcmStore');
+
+    var request = objectStore.delete(id);
+
+    request.onsuccess = function (event) {
+        console.log("Data deleted successfully");
+    };
+
+    request.onerror = function (event) {
+        console.log("Error deleting data: " + event.target.errorCode);
+    };
+}
